@@ -1,5 +1,3 @@
-/** @jsxImportSource @emotion/react */
-
 import './App.css';
 import { useEffect, useState } from 'react';
 import { FilterButton } from './FilterButton';
