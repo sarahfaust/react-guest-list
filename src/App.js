@@ -1,118 +1,221 @@
 import './App.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { FilterButton } from './FilterButton';
+import { Guest } from './Guest';
+
+const FILTERS = {
+  All: () => true,
+  Coming: (guest) => guest.attending,
+  'Not Coming': (guest) => !guest.attending,
+};
+
+const FILTER_NAMES = Object.keys(FILTERS);
 
 function App() {
-  const guestInit = [
-    { id: 1, firstName: 'sarah', lastName: 'faustmann', isAttending: false },
-    { id: 2, firstName: 'jimmy', lastName: 'hodza', isAttending: false },
-    { id: 3, firstName: 'thomas', lastName: 'teufel', isAttending: false },
-    { id: 4, firstName: 'iris', lastName: 'eibensteiner', isAttending: false },
-  ];
-
-  const [id, setId] = useState('');
+  const baseUrl = 'http://localhost:5000';
+  const [isLoading, setIsLoading] = useState(false);
+  const [guestList, setGuestList] = useState([]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [isAttending, setIsAttending] = useState(false);
-  const [guestList, setGuestList] = useState(guestInit);
+  const [filter, setFilter] = useState('All');
 
-  function handleClick(event) {
-    const newList = [
-      ...guestList,
-      {
-        id: id,
+  // get all guests
+  async function getAllGuests() {
+    setIsLoading(true);
+    const response = await fetch(`${baseUrl}/`);
+    const allGuestsResponse = await response.json();
+
+    setTimeout(() => {
+      setGuestList(allGuestsResponse);
+      setIsLoading(false);
+    }, 500);
+  }
+
+  useEffect(() => {
+    getAllGuests();
+  }, []);
+
+  // save new guest to backend
+  async function createGuest() {
+    const response = await fetch(`${baseUrl}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         firstName: firstName,
         lastName: lastName,
-        isAttending: isAttending,
-      },
-    ];
+        attending: false,
+      }),
+    });
 
-    event.preventDefault();
-    setGuestList(newList);
-    setId('');
+    const createdGuest = await response.json();
+    const updatedList = [...guestList, createdGuest];
+
+    logBefore(updatedList, createdGuest);
+    setGuestList(updatedList);
+    logAfter();
+
     setFirstName('');
     setLastName('');
   }
 
-  function handleCheck(id) {
-    const newList = guestList.map((guest) => {
-      if (guest.id === id) {
-        const updatedGuest = {
-          ...guest,
-          isAttending: !guest.isAttending,
-        };
-        return updatedGuest;
-      }
-      return guest;
+  // handle change in attending status
+  async function updateAttending(guest) {
+    const response = await fetch(`${baseUrl}/${guest.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ attending: !guest.attending }),
     });
-    setGuestList(newList);
+
+    const updatedGuest = await response.json();
+
+    const updatedList = guestList.map((guestOnList) => {
+      if (guestOnList.id === guest.id) {
+        const guestInUpdate = {
+          ...guestOnList,
+          attending: !guest.attending,
+        };
+        return guestInUpdate;
+      }
+      return guestOnList;
+    });
+
+    logBefore(updatedList, updatedGuest);
+    setGuestList(updatedList);
+    logAfter();
   }
 
-  function handleDelete(id) {
-    const newList = guestList.filter((guest) => guest.id !== id);
-    setGuestList(newList);
+  // update guest
+  async function updateGuest(guest) {
+    console.log('update function guest');
+    console.log(guest);
+    const response = await fetch(`${baseUrl}/${guest.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+      }),
+    });
+
+    const updatedGuest = await response.json();
+
+    const updatedList = guestList.map((guestOnList) => {
+      if (guestOnList.id === guest.id) {
+        const guestInUpdate = {
+          ...guestOnList,
+          firstName: guest.firstName,
+          lastName: guest.lastName,
+        };
+        return guestInUpdate;
+      }
+      return guestOnList;
+    });
+
+    logBefore(updatedList, updatedGuest);
+    setGuestList(updatedList);
+    logAfter();
   }
 
-  function deleteAllAttending() {
-    const newList = guestList.filter((guest) => !guest.isAttending);
-    setGuestList(newList);
+  function logBefore(listBefore, item) {
+    console.log('list before');
+    console.log(listBefore);
+    console.log('item');
+    console.log(item);
   }
 
-  function showAttending() {
-    const newList = guestList.filter((guest) => guest.isAttending);
-    setGuestList(newList);
+  function logAfter() {
+    console.log('list after');
+    console.log(guestList);
   }
-  function showNotAttending() {}
+
+  async function deleteGuest(id) {
+    const response = await fetch(`${baseUrl}/${id}`, { method: 'DELETE' });
+    const deletedGuest = await response.json();
+    const remainingGuests = guestList.filter((guest) => guest.id !== id);
+    logBefore(remainingGuests, deletedGuest);
+    setGuestList(remainingGuests);
+    logAfter();
+  }
+
+  async function deleteAllAttending() {
+    for (let i = 0; i < guestList.lengh; i++) {
+      if (guestList[i].attending) {
+        const response = await fetch(`${baseUrl}/${guestList[i].id}`, {
+          method: 'DELETE',
+        });
+
+        const deletedGuest = await response.json();
+        console.log(deletedGuest);
+      }
+    }
+    const remainingGuests = guestList.filter((guest) => !guest.attending);
+    setGuestList(remainingGuests);
+  }
+
+  const filterList = FILTER_NAMES.map((name) => (
+    <FilterButton
+      key={name}
+      name={name}
+      isPressed={name === filter}
+      setFilter={setFilter}
+    />
+  ));
 
   return (
     <div className="App">
       <h1>Guest List</h1>
       <h2>Add guest</h2>
       <form>
-        <label htmlFor="id">ID:</label>
-        <input
-          id="id"
-          value={id}
-          onChange={(event) => setId(event.currentTarget.value)}
-        />
-        <label htmlFor="firstName">First name:</label>
+        <label htmlFor="firstName">First name: </label>
         <input
           id="firstName"
           value={firstName}
           onChange={(event) => setFirstName(event.currentTarget.value)}
+          disabled={isLoading}
         />
-        <label htmlFor="lastName">Last name:</label>
+        <label htmlFor="lastName">Last name: </label>
         <input
           id="lastName"
           value={lastName}
           onChange={(event) => setLastName(event.currentTarget.value)}
+          disabled={isLoading}
         />
-        <button type="submit" onClick={(event) => handleClick(event)}>
+        <button
+          type="submit"
+          onClick={(event) => {
+            event.preventDefault();
+            createGuest();
+          }}
+          disabled={isLoading}
+        >
           Add guest
         </button>
       </form>
       <h2>Guests</h2>
-      <button onClick={() => deleteAllAttending()}>Delete attending</button>
-      <button onClick={() => showAttending()}>Who's coming</button>
-      <button onClick={() => showNotAttending()}>Who's not</button>
-      <ul>
-        {guestList.map((guest) => (
-          <>
-            <li key={guest.id}>
-              {guest.id} {guest.firstName} {guest.lastName}
-            </li>
-            <label htmlFor="attending">Attending</label>
-            <input
-              id="attending"
-              type="checkbox"
-              checked={guest.isAttending}
-              onChange={() => handleCheck(guest.id)}
+      <button onClick={deleteAllAttending}>Delete attending</button>
+      {filterList}
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        <ul>
+          {guestList.filter(FILTERS[filter]).map((guest) => (
+            <Guest
+              guest={guest}
+              updateAttending={updateAttending}
+              updateGuest={updateGuest}
+              deleteGuest={deleteGuest}
+              setFirstName={setFirstName}
+              setLastName={setLastName}
             />
-            <button type="button" onClick={() => handleDelete(guest.id)}>
-              Delete guest
-            </button>
-          </>
-        ))}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
