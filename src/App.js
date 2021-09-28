@@ -4,13 +4,13 @@ import { FilterButton } from './FilterButton';
 import { Guest } from './Guest';
 import { initDataList } from './InitData';
 
-const FILTERS = {
-  All: () => true,
-  Coming: (guest) => guest.attending,
-  'Not Coming': (guest) => !guest.attending,
+const filterMap = {
+  all: () => true,
+  coming: (guest) => guest.attending,
+  notComing: (guest) => !guest.attending,
 };
 
-const FILTER_NAMES = Object.keys(FILTERS);
+const filterNames = Object.keys(filterMap);
 
 function App() {
   const baseUrl = 'http://localhost:5000';
@@ -18,7 +18,7 @@ function App() {
   const [guestList, setGuestList] = useState([]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [filter, setFilter] = useState('All');
+  const [filterShow, setFilterShow] = useState('all');
 
   async function setDataInit() {
     for (let i = 0; i < initDataList.length; i++) {
@@ -34,7 +34,10 @@ function App() {
         }),
       });
     }
-    getAllGuests();
+
+    const initResponse = await fetch(`${baseUrl}/`);
+    const initAllGuestsResponse = await initResponse.json();
+    setGuestList(initAllGuestsResponse);
   }
 
   // get all guests
@@ -43,10 +46,15 @@ function App() {
     const response = await fetch(`${baseUrl}/`);
     const allGuestsResponse = await response.json();
 
-    setTimeout(() => {
-      setGuestList(allGuestsResponse);
+    if (allGuestsResponse.length === 0) {
       setIsLoading(false);
-    }, 500);
+    } else {
+      setTimeout(() => {
+        setGuestList(allGuestsResponse);
+        console.log(allGuestsResponse);
+        setIsLoading(false);
+      }, 500);
+    }
   }
 
   useEffect(() => {
@@ -154,6 +162,7 @@ function App() {
   async function deleteGuest(id) {
     const response = await fetch(`${baseUrl}/${id}`, { method: 'DELETE' });
     const deletedGuest = await response.json();
+    console.log(deletedGuest);
     const remainingGuests = guestList.filter((guest) => guest.id !== id);
     setGuestList(remainingGuests);
   }
@@ -173,12 +182,12 @@ function App() {
     setGuestList(remainingGuests);
   }
 
-  const filterList = FILTER_NAMES.map((name) => (
+  const filterList = filterNames.map((name) => (
     <FilterButton
       key={name}
       name={name}
-      isPressed={name === filter}
-      setFilter={setFilter}
+      isPressed={name === filterShow}
+      setFilterShow={setFilterShow}
     />
   ));
 
@@ -202,7 +211,6 @@ function App() {
           disabled={isLoading}
         />
         <button
-          type="submit"
           onClick={(event) => {
             event.preventDefault();
             createGuest();
@@ -221,8 +229,9 @@ function App() {
         </div>
       ) : (
         <ul>
-          {guestList.filter(FILTERS[filter]).map((guest) => (
+          {guestList.filter(filterMap[filterShow]).map((guest) => (
             <Guest
+              key={guest.id}
               guest={guest}
               updateAttending={updateAttending}
               updateGuest={updateGuest}

@@ -2,7 +2,7 @@ export function FilterButton(props) {
   return (
     <button
       aria-pressed={props.isPressed}
-      onClick={() => props.setFilter(props.name)}
+      onClick={() => props.setFilterShow(props.name)}
     >
       {props.name}
     </button>
