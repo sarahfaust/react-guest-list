@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react/cjs/react.development';
+import { useEffect, useState } from 'react';
 
 export function Guest({ guest, updateAttending, deleteGuest, updateGuest }) {
   const [isInEdit, setIsInEdit] = useState(false);
