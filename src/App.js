@@ -13,7 +13,7 @@ const filterMap = {
 const filterNames = Object.keys(filterMap);
 
 function App() {
-  const baseUrl = 'http://localhost:5000';
+  const baseUrl = 'https://express-guest-list-backend.herokuapp.com/';
   const [isLoading, setIsLoading] = useState(false);
   const [guestList, setGuestList] = useState([]);
   const [firstName, setFirstName] = useState('');
