@@ -186,31 +186,35 @@ function App() {
       <h1>Guest List</h1>
       <h2>Add guest</h2>
       <form>
-        <label>
-          First name
-          <input
-            value={firstName}
-            onChange={(event) => setFirstName(event.currentTarget.value)}
+        <div>
+          <label>
+            First name
+            <input
+              value={firstName}
+              onChange={(event) => setFirstName(event.currentTarget.value)}
+              disabled={isLoading}
+              style={{ marginLeft: '12px' }}
+            />
+          </label>
+          <label>
+            Last name
+            <input
+              value={lastName}
+              onChange={(event) => setLastName(event.currentTarget.value)}
+              disabled={isLoading}
+              style={{ marginLeft: '12px' }}
+            />
+          </label>
+          <button
+            onClick={(event) => {
+              event.preventDefault();
+              createGuest();
+            }}
             disabled={isLoading}
-          />
-        </label>
-        <label>
-          Last name
-          <input
-            value={lastName}
-            onChange={(event) => setLastName(event.currentTarget.value)}
-            disabled={isLoading}
-          />
-        </label>
-        <button
-          onClick={(event) => {
-            event.preventDefault();
-            createGuest();
-          }}
-          disabled={isLoading}
-        >
-          Add guest
-        </button>
+          >
+            Add guest
+          </button>
+        </div>
       </form>
       <h2>Guests</h2>
       <div>{filterList}</div>

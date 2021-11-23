@@ -33,7 +33,7 @@ button {
 }
 
 label {
-  margin-right: 12px;
+  grid-gap: 12px;
 }
 
 ul {
@@ -45,7 +45,7 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 540px;
+  width: 600px;
   height: 32px;
   padding: 6px 0;
 }
