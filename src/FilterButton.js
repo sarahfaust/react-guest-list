@@ -3,8 +3,9 @@ export function FilterButton(props) {
     <button
       aria-pressed={props.isPressed}
       onClick={() => props.setFilterShow(props.name)}
+      style={{ backgroundColor: props.color }}
     >
-      {props.name}
+      {props.displayName}
     </button>
   );
 }

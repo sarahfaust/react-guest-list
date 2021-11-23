@@ -49,30 +49,14 @@ function App() {
     if (allGuestsResponse.length === 0) {
       setIsLoading(false);
     } else {
-      setTimeout(() => {
-        setGuestList(allGuestsResponse);
-        console.log(allGuestsResponse);
-        setIsLoading(false);
-      }, 500);
+      setGuestList(allGuestsResponse);
+      setIsLoading(false);
     }
   }
 
   useEffect(() => {
     getAllGuests();
   }, []);
-
-  // this confirms that state is not set synchronously ;)
-  function logBefore(listBefore, item) {
-    console.log('list before');
-    console.log(listBefore);
-    console.log('item');
-    console.log(item);
-  }
-
-  function logAfter() {
-    console.log('list after');
-    console.log(guestList);
-  }
 
   // save new guest to backend
   async function createGuest() {
@@ -91,9 +75,7 @@ function App() {
     const createdGuest = await response.json();
     const updatedList = [...guestList, createdGuest];
 
-    logBefore(updatedList, createdGuest);
     setGuestList(updatedList);
-    logAfter();
 
     setFirstName('');
     setLastName('');
@@ -128,8 +110,6 @@ function App() {
 
   // update guest
   async function updateGuest(guest) {
-    console.log('update function guest');
-    console.log(guest);
     const response = await fetch(`${baseUrl}/${guest.id}`, {
       method: 'PATCH',
       headers: {
@@ -186,8 +166,18 @@ function App() {
     <FilterButton
       key={name}
       name={name}
+      displayName={
+        name === 'all' ? 'All' : name === 'coming' ? 'Coming' : 'Not coming'
+      }
       isPressed={name === filterShow}
       setFilterShow={setFilterShow}
+      color={
+        name === 'all'
+          ? 'lightgreen'
+          : name === 'coming'
+          ? 'lightblue'
+          : 'lightcoral'
+      }
     />
   ));
 
@@ -196,20 +186,22 @@ function App() {
       <h1>Guest List</h1>
       <h2>Add guest</h2>
       <form>
-        <label htmlFor="firstName">First name: </label>
-        <input
-          id="firstName"
-          value={firstName}
-          onChange={(event) => setFirstName(event.currentTarget.value)}
-          disabled={isLoading}
-        />
-        <label htmlFor="lastName">Last name: </label>
-        <input
-          id="lastName"
-          value={lastName}
-          onChange={(event) => setLastName(event.currentTarget.value)}
-          disabled={isLoading}
-        />
+        <label>
+          First name
+          <input
+            value={firstName}
+            onChange={(event) => setFirstName(event.currentTarget.value)}
+            disabled={isLoading}
+          />
+        </label>
+        <label>
+          Last name
+          <input
+            value={lastName}
+            onChange={(event) => setLastName(event.currentTarget.value)}
+            disabled={isLoading}
+          />
+        </label>
         <button
           onClick={(event) => {
             event.preventDefault();
@@ -221,8 +213,7 @@ function App() {
         </button>
       </form>
       <h2>Guests</h2>
-      <button onClick={deleteAllAttending}>Delete attending</button>
-      {filterList}
+      <div>{filterList}</div>
       {isLoading ? (
         <div>
           <p>Loading...</p>
@@ -236,13 +227,14 @@ function App() {
               updateAttending={updateAttending}
               updateGuest={updateGuest}
               deleteGuest={deleteGuest}
-              setFirstName={setFirstName}
-              setLastName={setLastName}
             />
           ))}
         </ul>
       )}
-      <button onClick={() => setDataInit()}>Initialize Data</button>
+      <div>
+        <button onClick={deleteAllAttending}>Delete attending</button>
+        <button onClick={() => setDataInit()}>Initialize guest data</button>
+      </div>
     </div>
   );
 }
